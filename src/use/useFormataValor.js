@@ -1,7 +1,8 @@
-export function useFormataValor(valor) {
+export function useFormataValor(valor, tipo) {
   let posNegSimbolo = ''
-  if(valor > 0) posNegSimbolo = '+'
-  else if(valor < 0) posNegSimbolo = '-'
+  if(tipo == 1) posNegSimbolo = '+'
+  else if(tipo == 0) posNegSimbolo = '-'
+  else posNegSimbolo = valor > 0 ? '+' : '-'
   
   const
     simboloMonetario = 'R$',

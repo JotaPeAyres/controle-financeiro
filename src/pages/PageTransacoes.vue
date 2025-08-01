@@ -18,16 +18,16 @@
             <q-item>
               <q-item-section
                 class="text-weight-bold"
-                :class="useValorCorClass(transacao.valor)"
+                :class="useValorCorClass(transacao.tipo)"
               >  
                 {{ transacao.descricao }}
               </q-item-section>
 
               <q-item-section
                 class="text-weight-bold"
-                :class="useValorCorClass(transacao.valor)"
+                :class="useValorCorClass(transacao.tipo)"
                 side>
-                {{ useFormataValor(transacao.valor) }}
+                {{ useFormataValor(transacao.valor, transacao.tipo) }}
               </q-item-section>
             </q-item>
         </q-slide-item>
@@ -42,7 +42,7 @@
           Saldo
         </div>
         <div 
-          :class="useValorCorClass(saldo)"
+          :class="useValorCorSaldoClass(saldo)"
           class="col text-h6 text-right"
         >
           {{ useFormataValor(saldo) }}
@@ -130,21 +130,24 @@
   import { uid, useQuasar  } from 'quasar'
   import { useFormataValor }  from 'src/use/useFormataValor'
   import { useValorCorClass }  from 'src/use/useValorCorClass'
+  import { useValorCorSaldoClass }  from 'src/use/useValorCorSaldoClass'
   import api from '../stores/api.js'
 
   const $q = useQuasar()
   
   onMounted(() => {
     carregaTransacoes()
+    buscaSaldo()
   })
 
+  const saldo = ref(0.0)
   const transacoes = ref ([]),
     tiposTransacoes = ([{nome: 'Despesa', value: 0}, {nome: 'Receita', value: 1} ])
 
   async function carregaTransacoes() {
       try {
         const response = await api.get('transacoes');
-        transacoes.value = response.data || []
+        transacoes.value = response.data
       } catch (error) {
         $q.notify({
           message: 'Erro ao carregar transações',
@@ -153,11 +156,17 @@
       }
     }
 
-  const saldo = computed(() => {
-    return transacoes.value.reduce((saldo, { valor }) => {
-      return saldo + valor
-    }, 0)
-  })
+  async function buscaSaldo() {
+    try {
+      const response = await api.get('FluxoCaixa/saldo-atual');
+      saldo.value = response.data.saldo
+    } catch (error) {
+      $q.notify({
+        message: 'Erro ao buscar saldo',
+        color: 'negative'
+      });
+    }
+  }
 
   const descricaoRef = ref(null)
 
@@ -210,8 +219,8 @@
       title: 'Deleta Transação',
       message: `
         Deseja deletar está transação?
-        <div class="q-mt-md text-weight-bold ${ useValorCorClass(transacao.valor) }">
-        ${ transacao.descricao }: ${ useFormataValor(transacao.valor) }
+        <div class="q-mt-md text-weight-bold ${ useValorCorClass(transacao.tipo) }">
+        ${ transacao.descricao }: ${ useFormataValor(transacao.valor, transacao.tipo) }
         </div>
       `,
       cancel: true,
